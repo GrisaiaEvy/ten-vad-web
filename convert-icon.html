@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .icon-preview {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .icon-size {
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        button {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5b21b6;
+        }
+    </style>
+</head>
+<body>
+    <h1>TEN VAD Web Icon Converter</h1>
+    <p>Click the buttons below to download icons in different sizes:</p>
+    
+    <div class="icon-preview">
+        <div class="icon-size">
+            <h3>16x16 (favicon)</h3>
+            <canvas id="canvas16" width="16" height="16"></canvas>
+            <br>
+            <button onclick="downloadIcon(16)">Download 16x16</button>
+        </div>
+        
+        <div class="icon-size">
+            <h3>32x32</h3>
+            <canvas id="canvas32" width="32" height="32"></canvas>
+            <br>
+            <button onclick="downloadIcon(32)">Download 32x32</button>
+        </div>
+        
+        <div class="icon-size">
+            <h3>192x192</h3>
+            <canvas id="canvas192" width="192" height="192"></canvas>
+            <br>
+            <button onclick="downloadIcon(192)">Download 192x192</button>
+        </div>
+        
+        <div class="icon-size">
+            <h3>512x512</h3>
+            <canvas id="canvas512" width="512" height="512"></canvas>
+            <br>
+            <button onclick="downloadIcon(512)">Download 512x512</button>
+        </div>
+    </div>
+
+    <script>
+        // SVG icon data
+        const svgData = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#7c3aed" stroke="#5b21b6" stroke-width="8"/>
+  
+  <!-- Microphone icon -->
+  <rect x="220" y="160" width="72" height="120" rx="36" fill="white"/>
+  <rect x="240" y="280" width="32" height="60" rx="16" fill="white"/>
+  
+  <!-- Sound wave lines -->
+  <path d="M 320 200 Q 340 180, 360 200 Q 380 220, 400 200 Q 420 180, 440 200" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M 320 240 Q 340 220, 360 240 Q 380 260, 400 240 Q 420 220, 440 240" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M 320 280 Q 340 260, 360 280 Q 380 300, 400 280 Q 420 260, 440 280" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+  
+  <!-- Voice detection indicator points -->
+  <circle cx="180" cy="200" r="8" fill="#ef4444"/>
+  <circle cx="180" cy="240" r="8" fill="#ef4444"/>
+  <circle cx="180" cy="280" r="8" fill="#ef4444"/>
+  <circle cx="180" cy="320" r="8" fill="#10b981"/>
+</svg>`;
+
+        // Render all icon sizes
+        function renderIcons() {
+            const sizes = [16, 32, 192, 512];
+            sizes.forEach(size => {
+                const canvas = document.getElementById(`canvas${size}`);
+                const ctx = canvas.getContext('2d');
+                
+                // Create Image object
+                const img = new Image();
+                const svgBlob = new Blob([svgData], {type: 'image/svg+xml'});
+                const url = URL.createObjectURL(svgBlob);
+                
+                img.onload = function() {
+                    // Clear canvas
+                    ctx.clearRect(0, 0, size, size);
+                    
+                    // Draw icon
+                    ctx.drawImage(img, 0, 0, size, size);
+                    
+                    URL.revokeObjectURL(url);
+                };
+                
+                img.src = url;
+            });
+        }
+
+        // Download icon
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `icon${size}x${size}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Render icons when page loads
+        window.onload = renderIcons;
+    </script>
+</body>
+</html> 

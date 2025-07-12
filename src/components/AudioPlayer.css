@@ -1,0 +1,98 @@
+.audio-player {
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.audio-player h3 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 1.2em;
+}
+
+.waveform-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.waveform {
+  width: 100%;
+  min-height: 80px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  position: relative;
+  overflow: visible;
+}
+
+.waveform-placeholder {
+  padding: 20px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px dashed #ced4da;
+}
+
+.waveform-placeholder p {
+  margin: 0;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.audio-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.play-pause-button {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.play-pause-button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.play-pause-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.debug-info {
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.debug-info small {
+  font-family: monospace;
+}
+
+.voice-segment-marker {
+  position: absolute;
+  background-color: rgba(255, 0, 0, 0.4);
+  border: 2px solid rgba(255, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 1000;
+  transition: background-color 0.2s;
+  top: 0;
+  min-width: 2px;
+  box-shadow: 0 0 4px rgba(255, 0, 0, 0.3);
+}
+
+.voice-segment-marker:hover {
+  background-color: rgba(255, 0, 0, 0.6);
+  border-color: rgba(255, 0, 0, 1);
+  box-shadow: 0 0 6px rgba(255, 0, 0, 0.5);
+} 

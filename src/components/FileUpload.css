@@ -1,0 +1,79 @@
+.file-upload {
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.file-upload h2 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 1.3em;
+}
+
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.upload-area input[type="file"] {
+  display: none;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.upload-button:hover {
+  background: #0056b3;
+}
+
+.upload-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.file-requirements {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+  text-align: center;
+}
+
+.test-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.test-button {
+  padding: 8px 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.test-button:hover:not(:disabled) {
+  background: #218838;
+}
+
+.test-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+} 

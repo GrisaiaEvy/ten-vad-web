@@ -1,0 +1,75 @@
+.warnings,
+.errors,
+.file-info {
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.warnings h3,
+.errors h3,
+.file-info h3 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 1.2em;
+}
+
+.warnings {
+  border-left: 4px solid #ffc107;
+  background: #fff3cd;
+}
+
+.warnings h3 {
+  color: #856404;
+}
+
+.warning {
+  color: #856404;
+  margin-bottom: 5px;
+}
+
+.errors {
+  border-left: 4px solid #dc3545;
+  background: #f8d7da;
+}
+
+.errors h3 {
+  color: #721c24;
+}
+
+.error {
+  color: #721c24;
+  margin-bottom: 5px;
+}
+
+.file-info {
+  border-left: 4px solid #28a745;
+  background: #d4edda;
+}
+
+.file-info h3 {
+  color: #155724;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 4px;
+  border: 1px solid #c3e6cb;
+}
+
+.info-grid div {
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.info-grid strong {
+  color: #495057;
+} 
