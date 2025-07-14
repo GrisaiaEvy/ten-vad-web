@@ -107,15 +107,6 @@ export default function VadApp() {
           audioBlob={audioBlob}
           voiceSegments={results?.voiceSegments || []}
         />
-        {/* Debug info */}
-        <div style={{ margin: '10px', padding: '10px', background: '#f0f0f0', fontSize: '12px' }}>
-          <strong>Debug Info:</strong><br/>
-          Audio URL: {audioUrl ? 'Set' : 'Not set'}<br/>
-          Audio Blob: {audioBlob ? 'Set' : 'Not set'}<br/>
-          Voice Segments: {results?.voiceSegments?.length || 0}<br/>
-          Results: {results ? 'Available' : 'Not available'}
-        </div>
-
         <ResultsDisplay results={results} />
       </main>
     </div>
