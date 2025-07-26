@@ -27,7 +27,7 @@ export default function VadApp() {
     processing: vadProcessing, 
     processVad, 
     reset: resetVad, 
-    getVADVersion 
+    getVADVersion
   } = useVadProcessor();
 
   const [audioUrl, setAudioUrl] = useState(null);
@@ -86,7 +86,7 @@ export default function VadApp() {
     <div className="vad-app">
       <AppHeader 
         vadModule={vadModule} 
-        getVADVersion={getVADVersion} 
+        getVADVersion={getVADVersion}
       />
 
       <main className="app-main">
@@ -105,8 +105,17 @@ export default function VadApp() {
         <AudioPlayer 
           audioUrl={audioUrl}
           audioBlob={audioBlob}
-          voiceSegments={results?.voiceSegments || []}
+          voiceSegments={results?.speechSegments || []}
         />
+        {/* Debug info */}
+        <div style={{ margin: '10px', padding: '10px', background: '#f0f0f0', fontSize: '12px' }}>
+          <strong>Debug Info:</strong><br/>
+          Audio URL: {audioUrl ? 'Set' : 'Not set'}<br/>
+          Audio Blob: {audioBlob ? 'Set' : 'Not set'}<br/>
+          Speech Segments: {results?.speechSegments?.length || 0}<br/>
+          Results: {results ? 'Available' : 'Not available'}
+        </div>
+
         <ResultsDisplay results={results} />
       </main>
     </div>

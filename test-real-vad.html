@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ten VAD Library Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Ten VAD Library Test</h1>
+    
+    <div class="test-section">
+        <h2>Library Loading Test</h2>
+        <div id="loading-status">Testing library loading...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>VAD Processing Test</h2>
+        <div id="processing-status">Testing VAD processing...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        import { NonRealTimeTenVAD } from 'https://cdn.jsdelivr.net/npm/ten-vad-lib@1.0.0/dist/index.esm.js';
+
+        const loadingStatus = document.getElementById('loading-status');
+        const processingStatus = document.getElementById('processing-status');
+        const resultsDiv = document.getElementById('results');
+
+        async function testVADLibrary() {
+            try {
+                // Test 1: Library Loading
+                loadingStatus.innerHTML = '<span class="info">Loading VAD library...</span>';
+                
+                const vad = await NonRealTimeTenVAD.new({
+                    hopSize: 256,
+                    voiceThreshold: 0.5,
+                    minSpeechDuration: 100,
+                    wasmPath: '/wasm/ten_vad.wasm',
+                    jsPath: '/wasm/ten_vad.js'
+                });
+                
+                loadingStatus.innerHTML = '<span class="success">✅ VAD library loaded successfully!</span>';
+                
+                // Test 2: Generate test audio
+                processingStatus.innerHTML = '<span class="info">Generating test audio...</span>';
+                
+                const sampleRate = 16000;
+                const duration = 2; // 2 seconds
+                const samples = duration * sampleRate;
+                const audioData = new Float32Array(samples);
+                
+                // Generate a simple sine wave with some noise
+                for (let i = 0; i < samples; i++) {
+                    const time = i / sampleRate;
+                    const frequency = 440; // 440 Hz
+                    const signal = Math.sin(2 * Math.PI * frequency * time) * 0.3;
+                    const noise = (Math.random() - 0.5) * 0.1;
+                    audioData[i] = Math.max(-1, Math.min(1, signal + noise));
+                }
+                
+                processingStatus.innerHTML = '<span class="info">Processing audio with VAD...</span>';
+                
+                // Test 3: Process audio
+                const result = await vad.process(audioData, sampleRate);
+                
+                processingStatus.innerHTML = '<span class="success">✅ VAD processing completed successfully!</span>';
+                
+                // Display results
+                resultsDiv.innerHTML = `
+                    <h3>Processing Results:</h3>
+                    <p><strong>Speech Segments:</strong> ${result.speechSegments.length}</p>
+                    <p><strong>Total Frames:</strong> ${result.statistics.totalFrames}</p>
+                    <p><strong>Voice Frames:</strong> ${result.statistics.voiceFrames}</p>
+                    <p><strong>Voice Percentage:</strong> ${result.statistics.voicePercentage.toFixed(1)}%</p>
+                    <p><strong>Processing Time:</strong> ${result.statistics.processingTime}ms</p>
+                    <p><strong>Real-time Factor:</strong> ${result.statistics.realTimeFactor.toFixed(3)}</p>
+                    
+                    <h4>Speech Segments:</h4>
+                    ${result.speechSegments.map((segment, index) => `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid #ccc;">
+                            <strong>Segment ${index + 1}:</strong><br>
+                            Start: ${segment.start}ms, End: ${segment.end}ms<br>
+                            Duration: ${segment.end - segment.start}ms<br>
+                            Probability: ${(segment.probability * 100).toFixed(1)}%
+                        </div>
+                    `).join('')}
+                `;
+                
+            } catch (error) {
+                loadingStatus.innerHTML = `<span class="error">❌ Error loading VAD library: ${error.message}</span>`;
+                processingStatus.innerHTML = `<span class="error">❌ Error processing audio: ${error.message}</span>`;
+                console.error('Test failed:', error);
+            }
+        }
+
+        // Run the test
+        testVADLibrary();
+    </script>
+</body>
+</html> 

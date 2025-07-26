@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Loading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>WASM Loading Test</h1>
+    
+    <div class="test-section">
+        <h2>Step 1: Load WASM Script</h2>
+        <div id="script-status">Loading WASM script...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Check createVADModule</h2>
+        <div id="module-status">Checking module availability...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Test VAD Library</h2>
+        <div id="vad-status">Testing VAD library...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 4: Process Audio</h2>
+        <div id="processing-status">Processing test audio...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const scriptStatus = document.getElementById('script-status');
+        const moduleStatus = document.getElementById('module-status');
+        const vadStatus = document.getElementById('vad-status');
+        const processingStatus = document.getElementById('processing-status');
+        const resultsDiv = document.getElementById('results');
+
+        async function testWASMLoading() {
+            try {
+                // Step 1: Load WASM script
+                scriptStatus.innerHTML = '<span class="info">Loading WASM script...</span>';
+                
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = '/wasm/ten_vad.js';
+                    script.onload = () => {
+                        scriptStatus.innerHTML = '<span class="success">✅ WASM script loaded successfully!</span>';
+                        setTimeout(resolve, 500); // Wait for module to initialize
+                    };
+                    script.onerror = () => {
+                        scriptStatus.innerHTML = '<span class="error">❌ Failed to load WASM script</span>';
+                        reject(new Error('Failed to load WASM script'));
+                    };
+                    document.head.appendChild(script);
+                });
+
+                // Step 2: Check if createVADModule is available
+                moduleStatus.innerHTML = '<span class="info">Checking module availability...</span>';
+                
+                if (typeof window.createVADModule === 'function') {
+                    moduleStatus.innerHTML = '<span class="success">✅ createVADModule is available!</span>';
+                } else {
+                    moduleStatus.innerHTML = '<span class="error">❌ createVADModule is not available</span>';
+                    throw new Error('createVADModule not found');
+                }
+
+                // Step 3: Test VAD Library
+                vadStatus.innerHTML = '<span class="info">Testing VAD library...</span>';
+                
+                // Import the VAD library
+                const { NonRealTimeTenVAD } = await import('https://cdn.jsdelivr.net/npm/ten-vad-lib@1.0.0/dist/index.esm.js');
+                
+                const vad = await NonRealTimeTenVAD.new({
+                    hopSize: 256,
+                    voiceThreshold: 0.5,
+                    minSpeechDuration: 100,
+                    wasmPath: '/wasm/ten_vad.wasm',
+                    jsPath: '/wasm/ten_vad.js'
+                });
+                
+                vadStatus.innerHTML = '<span class="success">✅ VAD library initialized successfully!</span>';
+
+                // Step 4: Process test audio
+                processingStatus.innerHTML = '<span class="info">Processing test audio...</span>';
+                
+                const sampleRate = 16000;
+                const duration = 2; // 2 seconds
+                const samples = duration * sampleRate;
+                const audioData = new Float32Array(samples);
+                
+                // Generate a simple sine wave with some noise
+                for (let i = 0; i < samples; i++) {
+                    const time = i / sampleRate;
+                    const frequency = 440; // 440 Hz
+                    const signal = Math.sin(2 * Math.PI * frequency * time) * 0.3;
+                    const noise = (Math.random() - 0.5) * 0.1;
+                    audioData[i] = Math.max(-1, Math.min(1, signal + noise));
+                }
+                
+                const result = await vad.process(audioData, sampleRate);
+                
+                processingStatus.innerHTML = '<span class="success">✅ Audio processing completed successfully!</span>';
+                
+                // Display results
+                resultsDiv.innerHTML = `
+                    <h3>Processing Results:</h3>
+                    <p><strong>Speech Segments:</strong> ${result.speechSegments.length}</p>
+                    <p><strong>Total Frames:</strong> ${result.statistics.totalFrames}</p>
+                    <p><strong>Voice Frames:</strong> ${result.statistics.voiceFrames}</p>
+                    <p><strong>Voice Percentage:</strong> ${result.statistics.voicePercentage.toFixed(1)}%</p>
+                    <p><strong>Processing Time:</strong> ${result.statistics.processingTime}ms</p>
+                    <p><strong>Real-time Factor:</strong> ${result.statistics.realTimeFactor.toFixed(3)}</p>
+                    
+                    <h4>Speech Segments:</h4>
+                    ${result.speechSegments.map((segment, index) => `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid #ccc;">
+                            <strong>Segment ${index + 1}:</strong><br>
+                            Start: ${segment.start}ms, End: ${segment.end}ms<br>
+                            Duration: ${segment.end - segment.start}ms<br>
+                            Probability: ${(segment.probability * 100).toFixed(1)}%
+                        </div>
+                    `).join('')}
+                `;
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                scriptStatus.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+                moduleStatus.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+                vadStatus.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+                processingStatus.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        // Run the test
+        testWASMLoading();
+    </script>
+</body>
+</html> 
