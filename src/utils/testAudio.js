@@ -73,3 +73,37 @@ export function createTestWavFile(durationMs = 5000, filename = 'test_audio.wav'
   
   return new File([blob], filename, { type: 'audio/wav' });
 } 
+
+// PCM转WAV工具
+export function encodeWavFromPCM(pcmInt16, sampleRate = 16000, channels = 1) {
+  const bitsPerSample = 16;
+  const dataSize = pcmInt16.length * 2;
+  const fileSize = 36 + dataSize;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  // RIFF header
+  view.setUint32(0, 0x52494646, false); // "RIFF"
+  view.setUint32(4, fileSize, true);    // File size
+  view.setUint32(8, 0x57415645, false); // "WAVE"
+
+  // fmt chunk
+  view.setUint32(12, 0x666D7420, false); // "fmt "
+  view.setUint32(16, 16, true);          // fmt chunk size
+  view.setUint16(20, 1, true);           // Audio format (PCM)
+  view.setUint16(22, channels, true);    // Channels
+  view.setUint32(24, sampleRate, true);  // Sample rate
+  view.setUint32(28, sampleRate * channels * bitsPerSample / 8, true); // Byte rate
+  view.setUint16(32, channels * bitsPerSample / 8, true); // Block align
+  view.setUint16(34, bitsPerSample, true);
+
+  // data chunk
+  view.setUint32(36, 0x64617461, false); // "data"
+  view.setUint32(40, dataSize, true);    // Data size
+
+  // Copy audio data
+  const audioView = new Int16Array(buffer, 44);
+  audioView.set(pcmInt16);
+
+  return buffer;
+} 

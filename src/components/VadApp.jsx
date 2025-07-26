@@ -8,6 +8,7 @@ import AudioPlayer from './AudioPlayer';
 import ResultsDisplay from './ResultsDisplay';
 import { LoadingState, ErrorState } from './LoadingStates';
 import './VadApp.css';
+import { encodeWavFromPCM } from '../utils/testAudio';
 
 export default function VadApp() {
   const { 
@@ -34,7 +35,7 @@ export default function VadApp() {
   const [audioBlob, setAudioBlob] = useState(null);
 
   // Handle file upload
-  const handleFileUpload = useCallback(async (file) => {
+  const handleFileUpload = useCallback(async (file, options = { type: 'wav', sampleRate: 16000 }) => {
     // Reset previous state
     resetAudio();
     resetVad();
@@ -42,22 +43,39 @@ export default function VadApp() {
     setAudioBlob(null);
 
     try {
-      // Process audio file
+      if (options.type === 'pcm') {
+        // 读取裸PCM
+        const arrayBuffer = await file.arrayBuffer();
+        const sampleRate = options.sampleRate || 16000;
+        // 构造wavInfo兼容结构
+        const wavInfo = {
+          sampleRate,
+          channels: 1,
+          bitsPerSample: 16,
+          dataOffset: 0,
+          dataSize: arrayBuffer.byteLength,
+          pcmData: new Int16Array(arrayBuffer),
+          totalSamples: arrayBuffer.byteLength / 2,
+          samplesPerChannel: arrayBuffer.byteLength / 2
+        };
+        // 生成可播放的wav blob（用于AudioPlayer）
+        const wavBuffer = encodeWavFromPCM(new Int16Array(arrayBuffer), sampleRate, 1);
+        const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+        setAudioBlob(blob);
+        await processVad(wavInfo, arrayBuffer);
+        return;
+      }
+      // WAV流程
       const audioData = await processAudioFile(file);
       if (!audioData) return;
-
       const { wavInfo, arrayBuffer } = audioData;
-
-      // Create audio URL for wavesurfer
       const blob = new Blob([arrayBuffer], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
-      // Update audioBlob state for AudioPlayer
       setAudioBlob(blob);
-
-      // Process VAD
       await processVad(wavInfo, arrayBuffer);
-
     } catch (error) {
       console.error('File processing failed:', error);
     }

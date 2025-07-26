@@ -8,7 +8,7 @@ export const useAudioProcessor = () => {
   const [errors, setErrors] = useState([]);
   const [processing, setProcessing] = useState(false);
 
-  const processAudioFile = useCallback(async (file) => {
+  const processAudioFile = useCallback(async (file, options = { type: 'wav', sampleRate: 16000 }) => {
     if (!file) return null;
 
     setProcessing(true);
@@ -17,25 +17,41 @@ export const useAudioProcessor = () => {
     setErrors([]);
 
     try {
-      // Read file
+      if (options.type === 'pcm') {
+        const arrayBuffer = await file.arrayBuffer();
+        const sampleRate = options.sampleRate || 16000;
+        const wavInfo = {
+          sampleRate,
+          channels: 1,
+          bitsPerSample: 16,
+          dataOffset: 0,
+          dataSize: arrayBuffer.byteLength,
+          pcmData: new Int16Array(arrayBuffer),
+          totalSamples: arrayBuffer.byteLength / 2,
+          samplesPerChannel: arrayBuffer.byteLength / 2
+        };
+        setFileInfo({
+          name: file.name,
+          size: file.size,
+          duration: (wavInfo.samplesPerChannel / wavInfo.sampleRate).toFixed(2),
+          sampleRate: wavInfo.sampleRate,
+          channels: wavInfo.channels,
+          bitsPerSample: wavInfo.bitsPerSample,
+          wavInfo,
+          arrayBuffer
+        });
+        return { wavInfo, arrayBuffer };
+      }
+      // WAV流程
       const arrayBuffer = await file.arrayBuffer();
-      
-      // Debug WAV file
       debugWavFile(arrayBuffer);
-      
-      // Parse WAV file
       const wavInfo = parseWav(arrayBuffer);
-      
-      // Validate format
       const { warnings: formatWarnings, errors: formatErrors } = validateWavFormat(wavInfo);
       setWarnings(formatWarnings);
       setErrors(formatErrors);
-      
       if (formatErrors.length > 0) {
         throw new Error(formatErrors.join(', '));
       }
-
-      // Set file information
       setFileInfo({
         name: file.name,
         size: file.size,
@@ -46,12 +62,7 @@ export const useAudioProcessor = () => {
         wavInfo,
         arrayBuffer
       });
-
-      return {
-        wavInfo,
-        arrayBuffer
-      };
-
+      return { wavInfo, arrayBuffer };
     } catch (error) {
       setErrors([error.message]);
       return null;

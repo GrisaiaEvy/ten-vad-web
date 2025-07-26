@@ -81,6 +81,22 @@ export const useVadProcessor = () => {
     initVad();
   }, []);
 
+  // 简单线性重采样（仅支持单声道）
+  function resampleTo16k(float32Audio, fromSampleRate) {
+    if (fromSampleRate === 16000) return float32Audio;
+    const ratio = fromSampleRate / 16000;
+    const newLength = Math.round(float32Audio.length / ratio);
+    const resampled = new Float32Array(newLength);
+    for (let i = 0; i < newLength; i++) {
+      const srcIndex = i * ratio;
+      const left = Math.floor(srcIndex);
+      const right = Math.min(left + 1, float32Audio.length - 1);
+      const frac = srcIndex - left;
+      resampled[i] = float32Audio[left] * (1 - frac) + float32Audio[right] * frac;
+    }
+    return resampled;
+  }
+
   const processVad = useCallback(async (wavInfo, arrayBuffer) => {
     if (!vadInstance) {
       throw new Error('VAD instance not loaded');
@@ -90,26 +106,37 @@ export const useVadProcessor = () => {
     setResults(null);
 
     try {
-      console.log('Starting audio processing...');
-      const pcm16 = new Int16Array(wavInfo.dataSize / 2);
-      const dv = new DataView(arrayBuffer, wavInfo.dataOffset, wavInfo.dataSize);
-      for (let i = 0; i < pcm16.length; i++) {
-        pcm16[i] = dv.getInt16(i * 2, true);
+      let float32Audio, sampleRate;
+      if (wavInfo.dataOffset === 0 && wavInfo.bitsPerSample === 16 && wavInfo.channels === 1) {
+        // 认为是裸PCM
+        const pcm16 = new Int16Array(arrayBuffer);
+        float32Audio = new Float32Array(pcm16.length);
+        for (let i = 0; i < pcm16.length; i++) {
+          float32Audio[i] = pcm16[i] / 32768;
+        }
+        sampleRate = wavInfo.sampleRate;
+      } else {
+        // 走原WAV流程
+        const pcm16 = new Int16Array(wavInfo.dataSize / 2);
+        const dv = new DataView(arrayBuffer, wavInfo.dataOffset, wavInfo.dataSize);
+        for (let i = 0; i < pcm16.length; i++) {
+          pcm16[i] = dv.getInt16(i * 2, true);
+        }
+        float32Audio = new Float32Array(pcm16.length);
+        for (let i = 0; i < pcm16.length; i++) {
+          float32Audio[i] = pcm16[i] / 32768; 
+        }
+        sampleRate = wavInfo.sampleRate;
       }
-
-      const float32Audio = new Float32Array(pcm16.length);
-      for (let i = 0; i < pcm16.length; i++) {
-        float32Audio[i] = pcm16[i] / 32768; 
+      // 自动重采样到16k
+      if (sampleRate !== 16000) {
+        float32Audio = resampleTo16k(float32Audio, sampleRate);
+        sampleRate = 16000;
       }
-
-      console.log(`Processing audio: ${float32Audio.length} samples, ${wavInfo.channels} channels`);
-
-      const result = await vadInstance.process(float32Audio, wavInfo.sampleRate);
-      console.log('VAD processing result:', result);
-
+      const result = await vadInstance.process(float32Audio, sampleRate);
       const convertedResults = {
         speechSegments: result.speechSegments.map(segment => ({
-          startFrame: Math.floor(segment.start / 16), // 16ms per frame
+          startFrame: Math.floor(segment.start / 16),
           endFrame: Math.floor(segment.end / 16),
           startTime: segment.start,
           endTime: segment.end,
@@ -121,15 +148,12 @@ export const useVadProcessor = () => {
           voiceFrames: result.statistics.voiceFrames,
           voicePercentage: result.statistics.voicePercentage,
           processingTime: result.statistics.processingTime,
-          totalAudioTime: (float32Audio.length / wavInfo.sampleRate) * 1000,
+          totalAudioTime: (float32Audio.length / sampleRate) * 1000,
           rtf: result.statistics.realTimeFactor
         }
       };
-
-      console.log('Converted results:', convertedResults);
       setResults(convertedResults);
       return convertedResults;
-
     } catch (error) {
       console.error('VAD processing failed:', error);
       throw error;
